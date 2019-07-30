@@ -182,7 +182,7 @@ export default {
         },
      
         searchResults() {
-          if (this.searchResults.length === 0 && this.input.length) {
+          if (this.searchResults.length === 0 && this.input.length > 0) {
             // Emitted when no dropdown results left
             this.$emit('no-tag-results');
           }
