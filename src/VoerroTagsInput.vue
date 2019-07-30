@@ -179,7 +179,14 @@ export default {
 
         value() {
             this.tagsFromValue();
-        }
+        },
+     
+        searchResults() {
+          if (this.searchResults.length === 0 && this.input.length) {
+            // Emitted when no dropdown results left
+            this.$emit('no-tag-results');
+          }
+        },
     },
 
     methods: {
