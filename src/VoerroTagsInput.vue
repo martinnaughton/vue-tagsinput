@@ -9,7 +9,6 @@
 
                 <i href="#" class="tags-input-remove" @click.prevent="removeTag(index)"></i>
             </span>
-
             <input type="text"
                 ref="taginput"
                 :placeholder="placeholder"
@@ -49,7 +48,7 @@
             <ul v-else-if="typeaheadStyle === 'dropdown'" :class="`typeahead-${typeaheadStyle}`">
                 <li v-for="(tag, index) in searchResults"
                 :key="index"
-                v-html="tag.text"
+                v-html="tag.slug"
                 @mouseover="searchSelection = index"
                 @mousedown.prevent="tagFromSearchOnClick(tag)"
                 v-bind:class="{
@@ -58,6 +57,29 @@
                 }"></li>
             </ul>
         </div>
+          <div v-show="showSuggestedTopics">
+              <ul v-if="typeaheadStyle === 'dropdown'" :class="`typeahead-${typeaheadStyle}`">
+                  <li style="cursor: default"
+                  v-bind:class="{
+                      'tags-input-typeahead-item-default': index != searchSelection,
+                      'tags-input-typeahead-item-highlighted-default': index == searchSelection
+                  }">Other suggested topics</i></li>
+                  <li v-for="(tag, index) in suggestedTags"
+                  :key="index"
+                  v-html="tag.slug"
+                  @mouseover="searchSelection = index"
+                  @mousedown.prevent="tagFromSearchOnClick(tag)"
+                  v-bind:class="{
+                      'tags-input-typeahead-item-default': index != searchSelection,
+                      'tags-input-typeahead-item-highlighted-default': index == searchSelection
+                  }"></li>
+              </ul>
+          </div>
+          <div v-show="noTopicsLeft">
+              <ul v-if="typeaheadStyle === 'dropdown'" :class="`typeahead-${typeaheadStyle}`">
+                  <li style="cursor: default" class="tags-input-typeahead-item-highlighted-default">No Topic Suggests</i></li>
+              </ul>
+          </div>
     </div>
 </template>
 
@@ -65,6 +87,13 @@
 export default {
     props: {
         elementId: String,
+
+        suggestedTags: {
+            type: Array,
+            default: () => {
+                return [];
+            }
+        },
 
         existingTags: {
             type: Object,
@@ -184,12 +213,35 @@ export default {
         searchResults() {
           if (this.searchResults.length === 0 && this.input.length > 0) {
             // Emitted when no dropdown results left
-            this.$emit('no-tag-results');
+            this.$emit('no-tag-results', this.input);
           }
         },
     },
+ 
+    computed: {
+      noTopicsLeft: function () {
+        return this.searchResults.length === 0 && this.input.length > 0 && this.suggestedTags.length === 0;
+        // return this.searchResults.length === 0 && this.input.length > 0 && this.checkTagExists(this.suggestedTags, this.input.trim()) === false;
+      },
+
+      showSuggestedTopics: function () {
+        return this.searchResults.length === 0 && this.input.length > 0 && this.suggestedTags.length > 0;
+      }
+    },
 
     methods: {
+        checkTagExists: function (tagsArray, userInput) {
+          var exists = false;
+          tagsArray.forEach((tag) => {
+            console.log(tag);
+            let text = tag.slug.toLowerCase();
+            if (text.search(this.escapeRegExp(userInput.toLowerCase())) > -1 && ! this.tagSelected(slug)) {
+              return exists;
+            }
+          });
+          return exists;
+        },
+ 
         escapeRegExp(string) {
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         },
@@ -228,6 +280,7 @@ export default {
         },
 
         tagFromSearch(tag) {
+            console.log('HERERERE');
             this.searchResults = [];
             this.input = '';
             this.oldInput = '';
